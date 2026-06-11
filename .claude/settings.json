@@ -12,7 +12,9 @@
       "PowerShell(python \"C:\\\\Users\\\\tubt\\\\AppData\\\\Local\\\\Temp\\\\create_word.py\")",
       "Read(//c/Users/tubt/Desktop/**)",
       "PowerShell($f = Get-Item \"C:\\\\Users\\\\tubt\\\\Desktop\\\\OnlineShop_Features.docx\"; \"$\\([math]::Round\\($f.Length/1KB, 1\\)\\) KB - $\\($f.LastWriteTime\\)\")",
-      "Bash(Remove-Item \"c:\\\\app\\\\APP_OnlineShop\\\\app\\\\src\\\\main\\\\java\\\\com\\\\example\\\\myapplication\\\\DatabaseHelper.java\")"
+      "Bash(Remove-Item \"c:\\\\app\\\\APP_OnlineShop\\\\app\\\\src\\\\main\\\\java\\\\com\\\\example\\\\myapplication\\\\DatabaseHelper.java\")",
+      "Bash(firebase --version)",
+      "WebFetch(domain:firestore.googleapis.com)"
     ],
     "additionalDirectories": [
       "C:\\Users\\tubt\\AppData\\Local\\Temp",
