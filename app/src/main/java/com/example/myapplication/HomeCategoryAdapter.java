@@ -72,8 +72,6 @@ public class HomeCategoryAdapter extends RecyclerView.Adapter<HomeCategoryAdapte
                     .load(GlideUtils.getGlideUrlWithUserAgent(imageUrl))
                     .transition(DrawableTransitionOptions.withCrossFade())
                     .centerCrop()
-                    .placeholder(R.drawable.ic_ball)
-                    .error(R.drawable.ic_ball)
                     .into(holder.ivImage);
         } else {
             int pad = (int)(10 * ctx.getResources().getDisplayMetrics().density);

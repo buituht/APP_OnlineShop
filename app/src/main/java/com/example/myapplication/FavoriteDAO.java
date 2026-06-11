@@ -1,70 +1,69 @@
 package com.example.myapplication;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class FavoriteDAO {
-    private SQLiteDatabase db;
-    private DatabaseHelper dbHelper;
+    private final FirebaseFirestore db;
 
-    public FavoriteDAO(Context context) {
-        dbHelper = new DatabaseHelper(context);
+    public FavoriteDAO() {
+        db = FirebaseFirestore.getInstance();
     }
 
-    public void open() {
-        db = dbHelper.getWritableDatabase();
+    public FavoriteDAO(android.content.Context context) {
+        this();
     }
 
-    public void close() {
-        dbHelper.close();
+    public Task<Void> addFavorite(String email, String productId) {
+        return db.collection("users").document(email)
+                .update("favorites", FieldValue.arrayUnion(productId));
     }
 
-    public void addFavorite(String email, String productId) {
-        open();
-        ContentValues values = new ContentValues();
-        values.put(DatabaseHelper.KEY_FAV_USER_EMAIL, email);
-        values.put(DatabaseHelper.KEY_FAV_PRODUCT_ID, productId);
-        db.insertWithOnConflict(DatabaseHelper.TABLE_FAVORITES, null, values, SQLiteDatabase.CONFLICT_IGNORE);
-        close();
+    public Task<Void> removeFavorite(String email, String productId) {
+        return db.collection("users").document(email)
+                .update("favorites", FieldValue.arrayRemove(productId));
     }
 
-    public void removeFavorite(String email, String productId) {
-        open();
-        db.delete(DatabaseHelper.TABLE_FAVORITES,
-                DatabaseHelper.KEY_FAV_USER_EMAIL + " = ? AND " + DatabaseHelper.KEY_FAV_PRODUCT_ID + " = ?",
-                new String[]{email, productId});
-        close();
+    public Task<DocumentSnapshot> getFavorites(String email) {
+        return db.collection("users").document(email).get();
     }
 
-    public boolean isFavorite(String email, String productId) {
-        open();
-        Cursor cursor = db.query(DatabaseHelper.TABLE_FAVORITES, null,
-                DatabaseHelper.KEY_FAV_USER_EMAIL + "=? AND " + DatabaseHelper.KEY_FAV_PRODUCT_ID + "=?",
-                new String[]{email, productId}, null, null, null);
-        boolean fav = cursor.getCount() > 0;
-        cursor.close();
-        close();
-        return fav;
+    public interface IsFavoriteCallback {
+        void onResult(boolean isFavorite);
     }
 
-    public List<String> getFavoriteIds(String email) {
-        open();
-        List<String> list = new ArrayList<>();
-        Cursor cursor = db.query(DatabaseHelper.TABLE_FAVORITES,
-                new String[]{DatabaseHelper.KEY_FAV_PRODUCT_ID},
-                DatabaseHelper.KEY_FAV_USER_EMAIL + " = ?",
-                new String[]{email}, null, null, null);
-        if (cursor.moveToFirst()) {
-            do {
-                list.add(cursor.getString(0));
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        close();
-        return list;
+    public void isFavorite(String email, String productId, IsFavoriteCallback callback) {
+        getFavorites(email).addOnSuccessListener(doc -> {
+            boolean result = false;
+            if (doc.exists()) {
+                List<?> favs = (List<?>) doc.get("favorites");
+                result = favs != null && favs.contains(productId);
+            }
+            callback.onResult(result);
+        }).addOnFailureListener(e -> callback.onResult(false));
+    }
+
+    public void getFavoriteIds(String email, FavoriteIdsCallback callback) {
+        getFavorites(email).addOnSuccessListener(doc -> {
+            List<String> ids = new ArrayList<>();
+            if (doc.exists()) {
+                List<?> raw = (List<?>) doc.get("favorites");
+                if (raw != null) {
+                    for (Object o : raw) {
+                        if (o != null) ids.add(o.toString());
+                    }
+                }
+            }
+            callback.onResult(ids);
+        }).addOnFailureListener(e -> callback.onResult(new ArrayList<>()));
+    }
+
+    public interface FavoriteIdsCallback {
+        void onResult(List<String> ids);
     }
 }

@@ -30,21 +30,38 @@
                 android:paddingHorizontal="12dp">
 
                 <ImageView
+                    android:id="@+id/btn_search_icon"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@android:drawable/ic_menu_search"
                     app:tint="@color/gray_text" />
 
                 <EditText
                     android:id="@+id/et_search"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_weight="1"
                     android:layout_marginStart="8dp"
                     android:background="@null"
                     android:hint="Tìm kiếm iPhone, Samsung..."
                     android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:textSize="14sp" />
+
+                <ImageView
+                    android:id="@+id/btn_voice_search"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Tìm kiếm bằng giọng nói"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_mic"
+                    app:tint="@color/gray_text" />
             </LinearLayout>
 
             <FrameLayout

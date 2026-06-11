@@ -4,15 +4,21 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -23,6 +29,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -79,12 +86,28 @@ public class MainActivity extends AppCompatActivity {
 
     private Button btnLoginNav;
     private ImageButton btnLogout;
+    private ImageView btnVoiceSearch;
+    private ImageView btnSearchIcon;
     private FloatingActionButton fabAdd;
     private BottomNavigationView bottomNavigationView;
 
     private EditText etSearch;
     private TextView tvCartCount, tvCountdown;
     private NonScrollListView lvProducts;
+
+    private final ActivityResultLauncher<Intent> speechLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    List<String> matches = result.getData()
+                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    if (matches != null && !matches.isEmpty()) {
+                        String query = matches.get(0);
+                        navigateToSearch(query);
+                    }
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
         setupClickListeners();
         setupBottomNavigation();
         setupSearch();
+        setupVoiceSearch();
         setupFlashSaleCountdown();
         
         loadProductsFromFirebase(); 
@@ -137,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
         rvFaqs = findViewById(R.id.rv_news);
         vpBanners = findViewById(R.id.vp_banners);
 
+        btnVoiceSearch = findViewById(R.id.btn_voice_search);
+        btnSearchIcon = findViewById(R.id.btn_search_icon);
         findViewById(R.id.btn_cart).setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
     }
 
@@ -291,6 +317,56 @@ public class MainActivity extends AppCompatActivity {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { filterProducts(s.toString()); }
             @Override public void afterTextChanged(Editable s) {}
+        });
+
+        etSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch();
+                return true;
+            }
+            return false;
+        });
+
+        if (btnSearchIcon != null) {
+            btnSearchIcon.setOnClickListener(v -> {
+                if (etSearch.getText().toString().trim().isEmpty()) {
+                    etSearch.requestFocus();
+                    InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                    imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT);
+                } else {
+                    performSearch();
+                }
+            });
+        }
+    }
+
+    private void performSearch() {
+        String query = etSearch.getText().toString().trim();
+        if (query.isEmpty()) return;
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+        navigateToSearch(query);
+    }
+
+    private void navigateToSearch(String query) {
+        Intent intent = new Intent(this, ProductListActivity.class);
+        intent.putExtra("search_query", query);
+        intent.putExtra("category_title", "Kết quả: \"" + query + "\"");
+        startActivity(intent);
+    }
+
+    private void setupVoiceSearch() {
+        if (btnVoiceSearch == null) return;
+        btnVoiceSearch.setOnClickListener(v -> {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+            intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Nói tên sản phẩm cần tìm...");
+            try {
+                speechLauncher.launch(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "Thiết bị không hỗ trợ nhận diện giọng nói", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

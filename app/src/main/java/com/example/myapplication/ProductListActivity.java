@@ -59,6 +59,7 @@ public class ProductListActivity extends AppCompatActivity {
         ArrayList<String> names = getIntent().getStringArrayListExtra("category_names");
         if (names != null) categoryFilter = names;
         String title = getIntent().getStringExtra("category_title");
+        String searchQuery = getIntent().getStringExtra("search_query");
 
         initViews();
         if (title != null) {
@@ -68,6 +69,10 @@ public class ProductListActivity extends AppCompatActivity {
         setupData();
         setupAdapter();
         setupSearch();
+        if (searchQuery != null && !searchQuery.isEmpty()) {
+            etSearch.setText(searchQuery);
+            etSearch.setSelection(searchQuery.length());
+        }
         setupBottomNavigation();
         updateCartBadge();
         loadProductsFromFirebase();

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(run)",
+      "Skill(run:*)",
+      "PowerShell(Get-Command adb -ErrorAction SilentlyContinue)",
+      "PowerShell($env:LOCALAPPDATA + \"\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" 2>&1)",
+      "PowerShell(& \"C:\\\\Users\\\\tubt\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices)",
+      "PowerShell(& \"C:\\\\Users\\\\tubt\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\emulator\\\\emulator.exe\" -list-avds 2>&1)",
+      "Read(//c/Users/tubt/AppData/Local/Temp/**)",
+      "PowerShell(pip install python-docx -q)",
+      "PowerShell(python \"C:\\\\Users\\\\tubt\\\\AppData\\\\Local\\\\Temp\\\\create_word.py\")",
+      "Read(//c/Users/tubt/Desktop/**)",
+      "PowerShell($f = Get-Item \"C:\\\\Users\\\\tubt\\\\Desktop\\\\OnlineShop_Features.docx\"; \"$\\([math]::Round\\($f.Length/1KB, 1\\)\\) KB - $\\($f.LastWriteTime\\)\")",
+      "Bash(Remove-Item \"c:\\\\app\\\\APP_OnlineShop\\\\app\\\\src\\\\main\\\\java\\\\com\\\\example\\\\myapplication\\\\DatabaseHelper.java\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\tubt\\AppData\\Local\\Temp",
+      "c:\\app\\APP_OnlineShop\\app\\src\\main\\java\\com\\example\\myapplication"
+    ]
+  }
+}

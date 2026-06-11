@@ -3,13 +3,17 @@ package com.example.myapplication;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +22,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -34,12 +39,27 @@ public class HomeActivity extends AppCompatActivity {
     
     private BottomNavigationView bottomNavigationView;
     private EditText etSearch;
+    private ImageView btnVoiceSearch;
     private TextView tvCartCount, tvCountdown;
     private RecyclerView rvCategories;
     private NonScrollListView lvProducts;
     private FloatingActionButton fabAddProduct, fabAddCategory;
-    
+
     private String selectedCategoryName = "";
+
+    private final ActivityResultLauncher<Intent> speechLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    List<String> matches = result.getData()
+                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    if (matches != null && !matches.isEmpty()) {
+                        etSearch.setText(matches.get(0));
+                        etSearch.setSelection(etSearch.getText().length());
+                    }
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +75,7 @@ public class HomeActivity extends AppCompatActivity {
         setupClickListeners();
         setupBottomNavigation();
         setupSearch();
+        setupVoiceSearch();
         setupFlashSaleCountdown();
         
         loadCategories();
@@ -72,7 +93,8 @@ public class HomeActivity extends AppCompatActivity {
         
         fabAddProduct = findViewById(R.id.fab_add_product_home);
         fabAddCategory = findViewById(R.id.fab_add_category_home);
-        
+        btnVoiceSearch = findViewById(R.id.btn_voice_search);
+
         findViewById(R.id.btn_cart_home).setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
         findViewById(R.id.btn_notification_home).setOnClickListener(v -> Toast.makeText(this, "Bạn có thông báo mới!", Toast.LENGTH_SHORT).show());
     }
@@ -202,6 +224,20 @@ public class HomeActivity extends AppCompatActivity {
             }
             @Override
             public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    private void setupVoiceSearch() {
+        btnVoiceSearch.setOnClickListener(v -> {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+            intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Nói tên sản phẩm cần tìm...");
+            try {
+                speechLauncher.launch(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "Thiết bị không hỗ trợ nhận diện giọng nói", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
